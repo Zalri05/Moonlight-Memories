@@ -1,0 +1,455 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moonlight Memories 🌙</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 20px 12px;
+    font-family: Georgia, serif;
+    text-align: center;
+    color: #e8defa;
+    background: linear-gradient(160deg, #10152f, #25264d, #51436e);
+}
+
+h1 {
+    font-size: 30px;
+    color: #f5e8ff;
+    text-shadow: 0 0 15px #c6a6ff;
+    margin: 10px 0;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #d1c4ed;
+    margin-bottom: 20px;
+}
+
+.game-card {
+    width: 100%;
+    max-width: 430px;
+    margin: auto;
+    padding: 18px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(220,200,255,.25);
+    box-shadow: 0 8px 30px rgba(0,0,0,.25);
+}
+
+.stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    color: #e8dcff;
+    gap: 5px;
+}
+
+#game-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 9px;
+    width: 100%;
+    max-width: 360px;
+    margin: auto;
+}
+
+.card {
+    aspect-ratio: 1 / 1;
+    border: 1px solid rgba(220,200,255,.35);
+    border-radius: 12px;
+    background: linear-gradient(145deg, #554878, #302b50);
+    color: white;
+    font-size: clamp(25px, 8vw, 38px);
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,.2);
+    transition: transform .2s, background .2s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.card:active {
+    transform: scale(.94);
+}
+
+.card.flipped,
+.card.matched {
+    background: linear-gradient(145deg, #f0e3ff, #c8b5ec);
+    color: #34274e;
+    border-color: #fff;
+}
+
+.card.matched {
+    opacity: .65;
+    cursor: default;
+    box-shadow: 0 0 12px rgba(220,200,255,.5);
+}
+
+.instructions {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #d1c4ed;
+    margin: 18px 0;
+}
+
+button.action {
+    padding: 14px 22px;
+    min-height: 48px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 25px;
+    background: #8872b9;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+button.action:active {
+    transform: scale(.96);
+}
+
+#win-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    padding: 30px 20px;
+    overflow-y: auto;
+    background: linear-gradient(160deg, #10152f, #25264d, #51436e);
+    color: white;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+#win-screen::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle, rgba(150,120,200,.2), rgba(9,12,32,.35));
+    pointer-events: none;
+}
+
+#win-screen > * {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 430px;
+}
+
+#win-screen h1 {
+    color: #fff1c9;
+}
+
+.moon-art {
+    font-size: 65px;
+    margin: 10px auto;
+    filter: drop-shadow(0 0 15px #fff0b5);
+}
+
+.special-message {
+    font-size: 19px;
+    font-style: italic;
+    color: #fff0c9;
+    line-height: 1.7;
+}
+
+#win-screen p {
+    line-height: 1.8;
+    text-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+
+@media(max-width:380px) {
+    h1 {
+        font-size: 25px;
+    }
+
+    .game-card {
+        padding: 12px;
+    }
+
+    #game-board {
+        gap: 7px;
+    }
+
+    .card {
+        border-radius: 9px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game-page">
+
+    <h1>🌙 Moonlight Memories</h1>
+
+    <p class="subtitle">
+        Every little star has its match. Can you find them all?
+    </p>
+
+    <div class="game-card">
+
+        <div class="stats">
+            <span>✨ Moves: <span id="moves">0</span></span>
+            <span>🌟 Matches: <span id="matches">0/8</span></span>
+            <span>⏳ Time: <span id="timer">0s</span></span>
+        </div>
+
+        <div id="game-board"></div>
+
+        <p class="instructions">
+            Find all 8 matching pairs.
+            Tap two cards to reveal what's hidden beneath the moonlight.
+        </p>
+
+        <button class="action" onclick="startGame()">
+            🌙 Restart Game
+        </button>
+
+    </div>
+</div>
+
+<div id="win-screen">
+
+    <div class="moon-art">🌙✨🌌</div>
+
+    <h1>You Found Your Moonlight!</h1>
+
+    <p class="special-message">
+        "The moon doesn't need to be whole to shine,
+        and neither do we."
+    </p>
+
+    <p>
+        Even on nights when the moon is only a little
+        crescent, it never loses its beauty.
+        So I hope you remember that you don't have
+        to have everything figured out to be enough.
+        You don't always have to be at your brightest
+        to be someone special.
+    </p>
+
+    <p>
+        And whenever life gets a little dark,
+        I hope you find your own little moonlight
+        to guide you home.
+    </p>
+
+    <p>
+        After all, no matter how far apart we may be,
+        we're still looking at the same moon. 🌙
+    </p>
+
+    <p><b>Don't stress yourself too much, oki? Enjoy your day. ❤️</b></p>
+
+    <button class="action" onclick="restartGame()">
+        🌃 Play Again
+    </button>
+
+</div>
+
+<script>
+
+const symbols = [
+    "🌙", "✨", "⭐", "☁️",
+    "🌌", "🪐", "💫", "🌠"
+];
+
+const board = document.getElementById("game-board");
+const movesDisplay = document.getElementById("moves");
+const matchesDisplay = document.getElementById("matches");
+const timerDisplay = document.getElementById("timer");
+const winScreen = document.getElementById("win-screen");
+
+let cards = [];
+let firstCard = null;
+let secondCard = null;
+let lockBoard = false;
+let moves = 0;
+let matches = 0;
+let seconds = 0;
+let timerInterval = null;
+let gameStarted = false;
+
+function startGame() {
+
+    clearInterval(timerInterval);
+
+    cards = [...symbols, ...symbols]
+        .sort(() => Math.random() - 0.5);
+
+    firstCard = null;
+    secondCard = null;
+    lockBoard = false;
+
+    moves = 0;
+    matches = 0;
+    seconds = 0;
+    gameStarted = false;
+
+    movesDisplay.textContent = moves;
+    matchesDisplay.textContent = "0/8";
+    timerDisplay.textContent = "0s";
+
+    board.innerHTML = "";
+
+    cards.forEach((symbol, index) => {
+
+        const card = document.createElement("button");
+
+        card.className = "card";
+        card.textContent = "🌙";
+        card.dataset.symbol = symbol;
+        card.setAttribute("aria-label", "Hidden card");
+
+        card.addEventListener("click", () => flipCard(card));
+
+        board.appendChild(card);
+
+    });
+
+}
+
+function startTimer() {
+
+    if (gameStarted) return;
+
+    gameStarted = true;
+
+    timerInterval = setInterval(() => {
+
+        seconds++;
+
+        timerDisplay.textContent = seconds + "s";
+
+    }, 1000);
+
+}
+
+function flipCard(card) {
+
+    if (
+        lockBoard ||
+        card === firstCard ||
+        card.classList.contains("matched") ||
+        card.classList.contains("flipped")
+    ) {
+        return;
+    }
+
+    startTimer();
+
+    card.textContent = card.dataset.symbol;
+    card.classList.add("flipped");
+    card.setAttribute("aria-label", card.dataset.symbol);
+
+    if (!firstCard) {
+
+        firstCard = card;
+        return;
+
+    }
+
+    secondCard = card;
+    moves++;
+
+    movesDisplay.textContent = moves;
+
+    checkMatch();
+
+}
+
+function checkMatch() {
+
+    const isMatch =
+        firstCard.dataset.symbol === secondCard.dataset.symbol;
+
+    if (isMatch) {
+
+        firstCard.classList.add("matched");
+        secondCard.classList.add("matched");
+
+        matches++;
+
+        matchesDisplay.textContent = matches + "/8";
+
+        resetTurn();
+
+        if (matches === 8) {
+
+            clearInterval(timerInterval);
+
+            setTimeout(() => {
+                document.getElementById("game-page").style.display = "none";
+                winScreen.style.display = "flex";
+            }, 700);
+
+        }
+
+    } else {
+
+        lockBoard = true;
+
+        setTimeout(() => {
+
+            firstCard.textContent = "🌙";
+            secondCard.textContent = "🌙";
+
+            firstCard.classList.remove("flipped");
+            secondCard.classList.remove("flipped");
+
+            firstCard.setAttribute("aria-label", "Hidden card");
+            secondCard.setAttribute("aria-label", "Hidden card");
+
+            resetTurn();
+
+        }, 900);
+
+    }
+
+}
+
+function resetTurn() {
+
+    firstCard = null;
+    secondCard = null;
+    lockBoard = false;
+
+}
+
+function restartGame() {
+
+    winScreen.style.display = "none";
+    document.getElementById("game-page").style.display = "block";
+
+    startGame();
+
+}
+
+// Start the game automatically
+startGame();
+
+</script>
+
+</body>
+</html>
+```
