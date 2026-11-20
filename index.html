@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Moonlight Memories 🌙</title>
+<title>Under the Same Moon 🌙</title>
 
 <style>
 * {
@@ -120,6 +120,8 @@ button.action:active {
     transform: scale(.96);
 }
 
+/* WINNING SCREEN */
+
 #win-screen {
     display: none;
     position: fixed;
@@ -130,21 +132,32 @@ button.action:active {
     height: 100dvh;
     padding: 30px 20px;
     overflow-y: auto;
-    background: linear-gradient(160deg, #10152f, #25264d, #51436e);
+
+    background-color: #10152f;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
     color: white;
     text-align: center;
+
     align-items: center;
     justify-content: center;
     flex-direction: column;
 }
 
+/* Dark overlay for readable text */
+
 #win-screen::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle, rgba(150,120,200,.2), rgba(9,12,32,.35));
+    background: rgba(9,12,32,.55);
+    z-index: 0;
     pointer-events: none;
 }
+
+/* Keep message above the background overlay */
 
 #win-screen > * {
     position: relative;
@@ -155,11 +168,17 @@ button.action:active {
 
 #win-screen h1 {
     color: #fff1c9;
+    text-shadow: 0 0 15px rgba(230,210,255,.9);
+}
+
+#win-screen p {
+    line-height: 1.8;
+    text-shadow: 0 2px 6px rgba(0,0,0,.9);
 }
 
 .moon-art {
-    font-size: 65px;
-    margin: 10px auto;
+    font-size: 55px;
+    margin: 15px auto;
     filter: drop-shadow(0 0 15px #fff0b5);
 }
 
@@ -167,13 +186,9 @@ button.action:active {
     font-size: 19px;
     font-style: italic;
     color: #fff0c9;
-    line-height: 1.7;
 }
 
-#win-screen p {
-    line-height: 1.8;
-    text-shadow: 0 2px 6px rgba(0,0,0,.5);
-}
+/* MOBILE */
 
 @media(max-width:380px) {
     h1 {
@@ -197,9 +212,11 @@ button.action:active {
 
 <body>
 
+<!-- GAME PAGE -->
+
 <div id="game-page">
 
-    <h1>🌙 Moonlight Memories</h1>
+    <h1>🌙 Under the Same Moon</h1>
 
     <p class="subtitle">
         Every little star has its match. Can you find them all?
@@ -225,7 +242,11 @@ button.action:active {
         </button>
 
     </div>
+
 </div>
+
+
+<!-- WINNING MESSAGE -->
 
 <div id="win-screen">
 
@@ -258,7 +279,9 @@ button.action:active {
         we're still looking at the same moon. 🌙
     </p>
 
-    <p><b>Don't stress yourself too much, oki? Enjoy your day. ❤️</b></p>
+    <p>
+        <b>Don't stress yourself too much, oki? Enjoy your day. ❤️</b>
+    </p>
 
     <button class="action" onclick="restartGame()">
         🌃 Play Again
@@ -266,7 +289,13 @@ button.action:active {
 
 </div>
 
+
 <script>
+
+// YOUR MOON PHOTO
+// Keep moon.jpeg in the same folder as this HTML file.
+
+const moonImage = "./moon.jpeg";
 
 const symbols = [
     "🌙", "✨", "⭐", "☁️",
@@ -277,56 +306,77 @@ const board = document.getElementById("game-board");
 const movesDisplay = document.getElementById("moves");
 const matchesDisplay = document.getElementById("matches");
 const timerDisplay = document.getElementById("timer");
-const winScreen = document.getElementById("win-screen");
 
-let cards = [];
+const winScreen = document.getElementById("win-screen");
+const gamePage = document.getElementById("game-page");
+
+// Apply your photo to the full-screen ending background.
+winScreen.style.backgroundImage = `url("${moonImage}")`;
+
 let firstCard = null;
 let secondCard = null;
+
 let lockBoard = false;
+
 let moves = 0;
 let matches = 0;
 let seconds = 0;
+
 let timerInterval = null;
 let gameStarted = false;
+
+
+// START GAME
 
 function startGame() {
 
     clearInterval(timerInterval);
 
-    cards = [...symbols, ...symbols]
-        .sort(() => Math.random() - 0.5);
-
     firstCard = null;
     secondCard = null;
+
     lockBoard = false;
 
     moves = 0;
     matches = 0;
     seconds = 0;
+
     gameStarted = false;
 
-    movesDisplay.textContent = moves;
+    movesDisplay.textContent = "0";
     matchesDisplay.textContent = "0/8";
     timerDisplay.textContent = "0s";
 
     board.innerHTML = "";
 
-    cards.forEach((symbol, index) => {
+    // Duplicate the symbols to create matching pairs.
+    const cards = [...symbols, ...symbols];
+
+    // Shuffle the cards.
+    cards.sort(() => Math.random() - 0.5);
+
+    cards.forEach(symbol => {
 
         const card = document.createElement("button");
 
         card.className = "card";
         card.textContent = "🌙";
+
         card.dataset.symbol = symbol;
         card.setAttribute("aria-label", "Hidden card");
 
-        card.addEventListener("click", () => flipCard(card));
+        card.addEventListener("click", () => {
+            flipCard(card);
+        });
 
         board.appendChild(card);
 
     });
 
 }
+
+
+// TIMER
 
 function startTimer() {
 
@@ -344,6 +394,9 @@ function startTimer() {
 
 }
 
+
+// FLIP CARD
+
 function flipCard(card) {
 
     if (
@@ -358,17 +411,21 @@ function flipCard(card) {
     startTimer();
 
     card.textContent = card.dataset.symbol;
+
     card.classList.add("flipped");
+
     card.setAttribute("aria-label", card.dataset.symbol);
 
     if (!firstCard) {
 
         firstCard = card;
+
         return;
 
     }
 
     secondCard = card;
+
     moves++;
 
     movesDisplay.textContent = moves;
@@ -376,6 +433,9 @@ function flipCard(card) {
     checkMatch();
 
 }
+
+
+// CHECK MATCH
 
 function checkMatch() {
 
@@ -393,13 +453,18 @@ function checkMatch() {
 
         resetTurn();
 
+        // ALL PAIRS FOUND
+
         if (matches === 8) {
 
             clearInterval(timerInterval);
 
             setTimeout(() => {
-                document.getElementById("game-page").style.display = "none";
+
+                gamePage.style.display = "none";
+
                 winScreen.style.display = "flex";
+
             }, 700);
 
         }
@@ -427,24 +492,34 @@ function checkMatch() {
 
 }
 
+
+// RESET TURN
+
 function resetTurn() {
 
     firstCard = null;
     secondCard = null;
+
     lockBoard = false;
 
 }
 
+
+// RESTART GAME
+
 function restartGame() {
 
     winScreen.style.display = "none";
-    document.getElementById("game-page").style.display = "block";
+
+    gamePage.style.display = "block";
 
     startGame();
 
 }
 
-// Start the game automatically
+
+// START AUTOMATICALLY
+
 startGame();
 
 </script>
